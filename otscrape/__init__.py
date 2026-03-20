@@ -39,12 +39,12 @@ def events2games(events):
         game['status'] = event['es']
         for participant in event['participants']:
             if participant['ih']:
-                home_id = participant['source']['tmid']
+                home_id = participant['partid']
                 game['home_team'] = participant['source']['nam']
                 game['home_team_abbr'] = participant['source']['abbr']
                 game['home_team_rank'] = participant['tr']
             else:
-                away_id = participant['source']['tmid']
+                away_id = participant['partid']
                 game['away_team'] = participant['source']['nam']
                 game['away_team_abbr'] = participant['source']['abbr']
                 game['away_team_rank'] = participant['tr']
@@ -90,6 +90,8 @@ def events2games(events):
                 game['quarter'] = stat['val']
             elif stat['nam'] == "gamestate-period":
                 game['period'] = stat['val']
+            elif stat['nam'] == "gamestate-half":
+                game['half'] = stat['val']
             elif stat['nam'] == "gamestate-inning":
                 game['inning'] = stat['val']
         time = qtr = ""
@@ -98,7 +100,8 @@ def events2games(events):
                 if time == "" and (play['nam'] == "event_clock" or play['nam'] == "event-clock"):
                     time = play['val']
                 if qtr == "" and (play['nam'] == "last-play-half" or play['nam'] == 'last-play-period' or play['nam'] == 'last-play-quarter'):
-                    qtr = make_ordinal(play['val'])
+                    if len(str(play['val'])) < 3:
+                        qtr = make_ordinal(play['val'])
             if time != "" and qtr != "":
                 game['status'] = qtr + ' ' + time
         games.append(game)

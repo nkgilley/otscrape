@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='otscrape',
-      version='0.0.1',
+      version='0.0.2',
       description='Python API for scraping oddstrader data',
       url='https://github.com/nkgilley/otscrape',
       author='Nolan Gilley',
