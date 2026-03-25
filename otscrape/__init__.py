@@ -51,29 +51,44 @@ def events2games(events):
         if 'home_team' not in game or 'away_team' not in game:
             continue 
         if event.get('currentLines'):
+            # try to find lines from a prioritized list of books
+            # 10=Pinnacle, 8=FanDuel, 9=BetMGM, 28=DraftKings, 29=Caesars, 36=Circa, 44=BetRivers, 82=Bovada, 84=BetOnline
+            priorities = [10, 8, 9, 28, 29, 36, 44, 82, 84]
+            lines_by_book = {}
             for line in event['currentLines']:
-                if line['paid'] == 10: # pinnacle
-                    if line['mtid'] == 401: # spread
-                        if line['partid'] == home_id:
-                            game['home_spread'] = line['adj']
-                            game['home_spread_odds'] = line['ap']
-                        elif line['partid'] == away_id:
-                            game['away_spread'] = line['adj']
-                            game['away_spread_odds'] = line['ap']
-                    elif line['mtid'] == 402 or line['mtid'] == 412: # over/under
-                        if line['partid'] == 15144: # under
-                            game['under_odds'] = line['ap']
-                            game['under'] = line['adj']
-                        if line['partid'] == 15143: # over
-                            game['over_odds'] = line['ap']
-                            game['over'] = line['adj']
-                        game['total'] = line['adj']
-                        game['total_odds'] = line['ap']
-                    elif line['mtid'] == 83 or line['mtid'] == 125: # moneyline
-                        if line['partid'] == home_id:
-                            game['home_ml'] = line['ap']
-                        elif line['partid'] == away_id:
-                            game['away_ml'] = line['ap']
+                paid = line['paid']
+                if paid not in lines_by_book:
+                    lines_by_book[paid] = []
+                lines_by_book[paid].append(line)
+            
+            for book_id in priorities:
+                if book_id in lines_by_book:
+                    for line in lines_by_book[book_id]:
+                        if line['mtid'] == 401: # spread
+                            if line['partid'] == home_id:
+                                game['home_spread'] = line['adj']
+                                game['home_spread_odds'] = line['ap']
+                            elif line['partid'] == away_id:
+                                game['away_spread'] = line['adj']
+                                game['away_spread_odds'] = line['ap']
+                        elif line['mtid'] == 402 or line['mtid'] == 412: # over/under
+                            if line['partid'] == 15144: # under
+                                game['under_odds'] = line['ap']
+                                game['under'] = line['adj']
+                            if line['partid'] == 15143: # over
+                                game['over_odds'] = line['ap']
+                                game['over'] = line['adj']
+                            game['total'] = line['adj']
+                            game['total_odds'] = line['ap']
+                        elif line['mtid'] == 83 or line['mtid'] == 125: # moneyline
+                            if line['partid'] == home_id:
+                                game['home_ml'] = line['ap']
+                            elif line['partid'] == away_id:
+                                game['away_ml'] = line['ap']
+                    
+                    # If we found at least one type of line for this book, we stop looking at other books
+                    if any(k in game for k in ['home_spread', 'total', 'home_ml']):
+                        break
         for score in event['scores']:
             if score['partid'] == home_id:
                 home_score += int(score['val'])
